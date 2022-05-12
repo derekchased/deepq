@@ -66,6 +66,17 @@ class DQN(nn.Module):
         #       the input would be a [32, 4] tensor and the output a [32, 1] tensor.
         # TODO: Implement epsilon-greedy exploration.
 
+        
+        # Use DQN
+        if(random() > self.eps_start):
+
+
+        # Take Random action
+        else:
+
+
+
+
         raise NotImplmentedError
 
 def optimize(dqn, target_dqn, memory, optimizer):
@@ -78,6 +89,10 @@ def optimize(dqn, target_dqn, memory, optimizer):
     #       four tensors in total: observations, actions, next observations and rewards.
     #       Remember to move them to GPU if it is available, e.g., by using Tensor.to(device).
     #       Note that special care is needed for terminal transitions!
+    
+    memory.sample(dqn.batch_size)
+    # each sample is a tuple: (obs, action, next_obs, reward)
+    # convert it to something usable
 
     # TODO: Compute the current estimates of the Q-values for each state-action
     #       pair (s,a). Here, torch.gather() is useful for selecting the Q-values
