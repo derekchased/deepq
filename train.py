@@ -9,6 +9,8 @@ from utils import preprocess
 from evaluate import evaluate_policy
 from dqn import DQN, ReplayMemory, optimize
 
+
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 parser = argparse.ArgumentParser()
@@ -46,9 +48,13 @@ if __name__ == '__main__':
 
         obs = preprocess(env.reset(), env=args.env).unsqueeze(0)
         
+        # for cart pole the the observation is something
+        # like env.reset() = [-0.03674591 -0.04221547 -0.04493564  0.00675605]
+
         while not done:
             # TODO: Get action from DQN.
             action = None
+            action = dqn.act(obs)
 
             # Act in the true environment.
             obs, reward, done, info = env.step(action)
