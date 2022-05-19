@@ -32,7 +32,10 @@ if __name__ == '__main__':
 
     # Initialize deep Q-networks.
     dqn = DQN(env_config=env_config).to(device)
+    
     # TODO: Create and initialize target Q-network.
+    dqn_target = DQN(env_config=env_config).to(device)
+    # dqn_target = copy.deepcopy(dqn)
 
     # Create replay memory.
     memory = ReplayMemory(env_config['memory_size'])
@@ -43,32 +46,46 @@ if __name__ == '__main__':
     # Keep track of best evaluation mean return achieved so far.
     best_mean_return = -float("Inf")
 
+
     for episode in range(env_config['n_episodes']):
+        print(f"episode {episode}")
         done = False
 
-        obs = preprocess(env.reset(), env=args.env).unsqueeze(0)
+        # [-0.03674591 -0.04221547 -0.04493564  0.00675605]
+        curr_obs = preprocess(env.reset(), env=args.env).unsqueeze(0)
         
         # for cart pole the the observation is something
         # like env.reset() = [-0.03674591 -0.04221547 -0.04493564  0.00675605]
-
+        step_counter = 1
         while not done:
-            # TODO: Get action from DQN.
-            action = None
-            action = dqn.act(obs)
+            # print(f"step")
 
+            # TODO: Get action from DQN.
+            action = dqn.act(curr_obs)
+            
             # Act in the true environment.
-            obs, reward, done, info = env.step(action)
+            next_obs, reward, done, info = env.step(action.item())
+
 
             # Preprocess incoming observation.
             if not done:
-                obs = preprocess(obs, env=args.env).unsqueeze(0)
-            
+                next_obs = preprocess(next_obs, env=args.env).unsqueeze(0)
+            # print(f"next_obs {next_obs}")
+
             # TODO: Add the transition to the replay memory. Remember to convert
             #       everything to PyTorch tensors!
+            print(curr_obs, action, next_obs, reward)
+            memory.push(curr_obs, action, next_obs, reward)
 
             # TODO: Run DQN.optimize() every env_config["train_frequency"] steps.
+            if env_config["train_frequency"]%step_counter == 0:
+                optimize(dqn, dqn_target, memory, optimizer)
 
             # TODO: Update the target network every env_config["target_update_frequency"] steps.
+            if env_config["target_update_frequency"]%step_counter == 0:
+                dqn_target.load_state_dict(dqn.state_dict())
+
+            step_counter += 1
 
         # Evaluate the current agent.
         if episode % args.evaluate_freq == 0:

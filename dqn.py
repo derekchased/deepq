@@ -4,6 +4,7 @@ import gym
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -66,18 +67,18 @@ class DQN(nn.Module):
         #       the input would be a [32, 4] tensor and the output a [32, 1] tensor.
         # TODO: Implement epsilon-greedy exploration.
 
+        action = self.forward(observation)
+
+        # epsilon = self.eps_start
+        epsilon = 0.05
+        prob = np.random.uniform(0, 1)
         
-        # Use DQN
-        if(random() > self.eps_start):
-
-
-        # Take Random action
+        if prob > epsilon:
+            return torch.argmax(action)
         else:
+            return torch.tensor(np.random.choice(self.n_actions), device=device).int()
+            
 
-
-
-
-        raise NotImplmentedError
 
 def optimize(dqn, target_dqn, memory, optimizer):
     """This function samples a batch from the replay buffer and optimizes the Q-network."""
@@ -90,7 +91,17 @@ def optimize(dqn, target_dqn, memory, optimizer):
     #       Remember to move them to GPU if it is available, e.g., by using Tensor.to(device).
     #       Note that special care is needed for terminal transitions!
     
-    memory.sample(dqn.batch_size)
+    mem = memory.sample(dqn.batch_size)
+    observations=  mem[0]
+    actions = mem[1]
+    next_observations = mem[2]
+    rewards = mem[3]
+
+    # (obs, action, next_obs, reward)
+    # mem=
+     # observations[],  ((tensor([[-0.0339, -0.0216,  0.0305, -0.0137]]), tensor([[-0.0348,  0.0021, -0.0234, -0.0009]]), ...
+    
+    # print(f"r {rewards}")
     # each sample is a tuple: (obs, action, next_obs, reward)
     # convert it to something usable
 
@@ -98,6 +109,15 @@ def optimize(dqn, target_dqn, memory, optimizer):
     #       pair (s,a). Here, torch.gather() is useful for selecting the Q-values
     #       corresponding to the chosen actions.
     
+    # print(observations)
+    # print(actions)
+    print("ddd", dqn(*observations))
+    state_action_values = dqn(observations).gather(1, actions)
+    # print(f"state_action_values\n{state_action_values}")
+
+    # q_values = something # here
+
+
     # TODO: Compute the Q-value targets. Only do this for non-terminal transitions!
     
     # Compute loss.
