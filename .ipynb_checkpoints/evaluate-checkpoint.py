@@ -9,18 +9,11 @@ import config
 from utils import preprocess
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-<<<<<<< HEAD
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--env', choices=['CartPole-v0'])
 parser.add_argument('--path', type=str, help='Path to stored DQN model.')
 parser.add_argument('--n_eval_episodes', type=int, default=1, help='Number of evaluation episodes.', nargs='?')
-=======
-parser = argparse.ArgumentParser()
-parser.add_argument('--env', choices=['CartPole-v0'], default='CartPole-v0')
-parser.add_argument('--path', type=str, help='Path to stored DQN model.', default='./models/CartPole-v0_best.pt')
-parser.add_argument('--n_eval_episodes', type=int, default=3, help='Number of evaluation episodes.', nargs='?')
->>>>>>> part 1 done
 parser.add_argument('--render', dest='render', action='store_true', help='Render the environment.')
 parser.add_argument('--save_video', dest='save_video', action='store_true', help='Save the episodes as video.')
 parser.set_defaults(render=False)
@@ -44,11 +37,8 @@ def evaluate_policy(dqn, env, env_config, args, n_episodes, render=False, verbos
         while not done:
             if render:
                 env.render()
-<<<<<<< HEAD
 
-=======
->>>>>>> part 1 done
-            action = dqn.act(obs, exploit=True).item()
+            action = dqn.act(obs_stack, exploit=True).item()
 
             obs, reward, done, info = env.step(action)
             obs = preprocess(obs, env=args.env).unsqueeze(0)
@@ -74,11 +64,7 @@ if __name__ == '__main__':
         env = gym.wrappers.Monitor(env, './video/', video_callable=lambda episode_id: True, force=True)
 
     # Load model from provided path.
-<<<<<<< HEAD
     dqn = torch.load(args.path, map_location=torch.device('cpu'))
-=======
-    dqn = torch.load(args.path, map_location=torch.device(device))
->>>>>>> part 1 done
     dqn.eval()
 
     mean_return = evaluate_policy(dqn, env, env_config, args, args.n_eval_episodes, render=args.render and not args.save_video, verbose=True)
