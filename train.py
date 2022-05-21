@@ -12,7 +12,7 @@ from dqn import DQN, ReplayMemory, optimize
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--env', choices=['CartPole-v0'], default='CartPole-v0')
+parser.add_argument('--env', choices=['CartPole-v0'], default='Pong-v0')
 parser.add_argument('--evaluate_freq', type=int, default=25, help='How often to run evaluation.', nargs='?')
 parser.add_argument('--evaluation_episodes', type=int, default=5, help='Number of evaluation episodes.', nargs='?')
 
@@ -26,6 +26,7 @@ if __name__ == '__main__':
 
     # Initialize environment and config.
     env = gym.make(args.env)
+    env = gym.wrappers.AtariPreprocessing(env, screen_size=84, grayscale_obs=True, frame_skip=1, noop_max=30)
     env_config = ENV_CONFIGS[args.env]
 
     # Initialize deep Q-networks.
@@ -42,12 +43,12 @@ if __name__ == '__main__':
 
     # Keep track of best evaluation mean return achieved so far.
     best_mean_return = -float("Inf")
-
+    obs_stack_size = 10
     for episode in range(env_config['n_episodes']):
         done = False
 
         obs = preprocess(env.reset(), env=args.env).unsqueeze(0)
-
+        obs_stack = torch.cat(obs_stack_size * [obs]).unsqueeze(0).to(device)
         while not done:
             num_step = 0
             # TODO: Get action from DQN.
@@ -59,6 +60,7 @@ if __name__ == '__main__':
             # Preprocess incoming observation.
             if not done:
                 obs_next = preprocess(obs_next, env=args.env).unsqueeze(0)
+                next_obs_stack = torch.cat((obs_stack[:, 1:, ...], obs.unsqueeze(1)), dim=1).to(device)
             else:
                 obs_next = None
             memory.push(obs, torch.asarray([action]), obs_next, torch.asarray([reward]))

@@ -29,3 +29,15 @@ CartPole = {
     'anneal_length': 10**4,
     'n_actions': 2,
 }
+Pong = {
+    'Observation stack size': 4,
+    'Replay memory capacity': 10000,
+    'Batch size': 32,
+    'Target update frequency': 1000,
+    'Training frequency': 4,
+    'Discount factor': 0.99,
+    'Learning rate': 1e-4,
+    'Initial epsilon': 1.0,
+    'Final epsilon': 0.01,
+    'Anneal length': 10**6,
+}
