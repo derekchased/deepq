@@ -5,11 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-<<<<<<< HEAD
-
-=======
 import random
->>>>>>> part 1 done
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -25,10 +21,6 @@ class ReplayMemory:
     def push(self, obs, action, next_obs, reward):
         if len(self.memory) < self.capacity:
             self.memory.append(None)
-<<<<<<< HEAD
-
-=======
->>>>>>> part 1 done
         self.memory[self.position] = (obs, action, next_obs, reward)
         self.position = (self.position + 1) % self.capacity
 
@@ -52,10 +44,7 @@ class DQN(nn.Module):
         self.eps_end = env_config["eps_end"]
         self.anneal_length = env_config["anneal_length"]
         self.n_actions = env_config["n_actions"]
-<<<<<<< HEAD
-=======
         self.epsilon = 1.0
->>>>>>> part 1 done
 
         self.fc1 = nn.Linear(4, 256)
         self.fc2 = nn.Linear(256, self.n_actions)
@@ -77,21 +66,6 @@ class DQN(nn.Module):
         #       For example, if the state dimension is 4 and the batch size is 32,
         #       the input would be a [32, 4] tensor and the output a [32, 1] tensor.
         # TODO: Implement epsilon-greedy exploration.
-<<<<<<< HEAD
-
-        action = self.forward(observation)
-
-        # epsilon = self.eps_start
-        epsilon = 0.05
-        prob = np.random.uniform(0, 1)
-        
-        if prob > epsilon:
-            return torch.argmax(action)
-        else:
-            return torch.tensor(np.random.choice(self.n_actions), device=device).int()
-            
-
-=======
         prob = np.random.uniform(0, 1)
         if self.epsilon > self.eps_end:
             self.epsilon = self.epsilon - (self.eps_start - self.eps_end)/self.anneal_length
@@ -103,7 +77,6 @@ class DQN(nn.Module):
             return torch.tensor([[random.randrange(self.n_actions)]], device=device, dtype=torch.long)
 
         raise NotImplmentedError
->>>>>>> part 1 done
 
 def optimize(dqn, target_dqn, memory, optimizer):
     """This function samples a batch from the replay buffer and optimizes the Q-network."""
@@ -115,39 +88,6 @@ def optimize(dqn, target_dqn, memory, optimizer):
     #       four tensors in total: observations, actions, next observations and rewards.
     #       Remember to move them to GPU if it is available, e.g., by using Tensor.to(device).
     #       Note that special care is needed for terminal transitions!
-<<<<<<< HEAD
-    
-    mem = memory.sample(dqn.batch_size)
-    observations=  mem[0]
-    actions = mem[1]
-    next_observations = mem[2]
-    rewards = mem[3]
-
-    # (obs, action, next_obs, reward)
-    # mem=
-     # observations[],  ((tensor([[-0.0339, -0.0216,  0.0305, -0.0137]]), tensor([[-0.0348,  0.0021, -0.0234, -0.0009]]), ...
-    
-    # print(f"r {rewards}")
-    # each sample is a tuple: (obs, action, next_obs, reward)
-    # convert it to something usable
-
-    # TODO: Compute the current estimates of the Q-values for each state-action
-    #       pair (s,a). Here, torch.gather() is useful for selecting the Q-values
-    #       corresponding to the chosen actions.
-    
-    # print(observations)
-    # print(actions)
-    print("ddd", dqn(*observations))
-    state_action_values = dqn(observations).gather(1, actions)
-    # print(f"state_action_values\n{state_action_values}")
-
-    # q_values = something # here
-
-
-    # TODO: Compute the Q-value targets. Only do this for non-terminal transitions!
-    
-    # Compute loss.
-=======
     (obs, action, next_obs, reward) = memory.sample(dqn.batch_size)
     non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
                                             next_obs)), device=device, dtype=torch.bool)
@@ -166,19 +106,13 @@ def optimize(dqn, target_dqn, memory, optimizer):
     # Compute loss.
     q_values = state_action_pair
     q_value_targets = expected_state_action_values
->>>>>>> part 1 done
     loss = F.mse_loss(q_values.squeeze(), q_value_targets)
 
     # Perform gradient descent.
     optimizer.zero_grad()
 
     loss.backward()
-<<<<<<< HEAD
-    optimizer.step()
-
-=======
     # for param in dqn.parameters():
     #     param.grad.data.clamp_(-1, 1)
     optimizer.step()
->>>>>>> part 1 done
     return loss.item()
