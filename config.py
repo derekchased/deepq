@@ -30,14 +30,16 @@ CartPole = {
     'n_actions': 2,
 }
 Pong = {
-    'Observation stack size': 4,
-    'Replay memory capacity': 10000,
-    'Batch size': 32,
-    'Target update frequency': 1000,
-    'Training frequency': 4,
-    'Discount factor': 0.99,
-    'Learning rate': 1e-4,
-    'Initial epsilon': 1.0,
-    'Final epsilon': 0.01,
-    'Anneal length': 10**6,
+    'obs_stack_size': 4,
+    'memory_size': 10000,
+    'batch_size': 32,
+    'target_update_frequency': 1000,
+    'n_episodes': 1000,
+    'train_frequency': 4,
+    'gamma': 0.99,
+    'lr': 1e-4,
+    'eps_start': 1.0,
+    'eps_end': 0.01,
+    'anneal_length': 10**6,
+    'n_actions': 6
 }

@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import random
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 
 class ReplayMemory:
@@ -50,7 +50,7 @@ class DQN(nn.Module):
         # self.fc2 = nn.Linear(256, self.n_actions)
         #
         # self.relu = nn.ReLU()
-        # self.flatten = nn.Flatten()
+        self.flatten = nn.Flatten()
         self.conv1 = nn.Conv2d(4, 32, kernel_size=8, stride=4, padding=0)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=0)
         self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0)
@@ -64,6 +64,7 @@ class DQN(nn.Module):
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.conv3(x)
+        x = self.flatten(x)
         x = self.fc1(x)
         x = self.fc2(x)
         return x
@@ -83,6 +84,7 @@ class DQN(nn.Module):
             with torch.no_grad():
                 return state_action_pair.max(1)[1].view(1, 1)
         else:
+
             return torch.tensor([[random.randrange(self.n_actions)]], device=device, dtype=torch.long)
 
         raise NotImplmentedError
