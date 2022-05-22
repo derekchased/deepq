@@ -52,7 +52,6 @@ if __name__ == '__main__':
         obs = preprocess(env.reset(), env=args.env).unsqueeze(0)
         obs_stack = torch.cat(obs_stack_size * [obs]).unsqueeze(0)
         # obs_stack /= 255.0
-        loss_ = []
         while not done:
             # TODO: Get action from DQN.
             action = dqn.act(obs_stack, exploit=True)
@@ -78,7 +77,6 @@ if __name__ == '__main__':
             # TODO: Run DQN.optimize() every env_config["train_frequency"] steps.
             if num_step % env_config["train_frequency"] == 0:
                 loss = optimize(dqn, target_dqn, memory, optimizer)
-                loss_.append(loss)
             # TODO: Update the target network every env_config["target_update_frequency"] steps.
             if num_step % env_config["target_update_frequency"] == 0:
                 target_dqn.load_state_dict(dqn.state_dict())
