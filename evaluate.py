@@ -8,7 +8,7 @@ import torch.nn as nn
 import config
 from utils import preprocess
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 parser = argparse.ArgumentParser()
 parser.add_argument('--env', choices=['CartPole-v0'], default='Pong-v0')
 parser.add_argument('--path', type=str, help='Path to stored DQN model.', default='./models/Pong-v0_best.pt')
@@ -40,7 +40,8 @@ def evaluate_policy(dqn, env, env_config, args, n_episodes, render=False, verbos
 
             obs, reward, done, info = env.step(action)
             obs = preprocess(obs, env=args.env).unsqueeze(0)
-            obs_stack = torch.cat(obs_stack_size * [obs]).unsqueeze(0).to(device)
+            next_obs_stack = torch.cat((obs_stack[:, 1:, ...], obs.unsqueeze(1)), dim=1).to(device)
+            obs_stack = next_obs_stack
             episode_return += reward
         
         total_return += episode_return

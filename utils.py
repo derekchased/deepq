@@ -4,7 +4,7 @@ import gym
 import torch
 import torch.nn as nn
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def preprocess(obs, env):
     """Performs necessary observation preprocessing."""
     if env in ['Pong-v0']:

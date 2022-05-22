@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import random
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class ReplayMemory:
@@ -49,23 +49,24 @@ class DQN(nn.Module):
         # self.fc1 = nn.Linear(4, 256)
         # self.fc2 = nn.Linear(256, self.n_actions)
         #
-        # self.relu = nn.ReLU()
-        self.flatten = nn.Flatten()
+        # self.pool = nn.MaxPool2d(2, 2)
+        self.relu = nn.ReLU()
         self.conv1 = nn.Conv2d(4, 32, kernel_size=8, stride=4, padding=0)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=0)
         self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0)
         self.fc1 = nn.Linear(3136, 512)
         self.fc2 = nn.Linear(512, self.n_actions)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         """Runs the forward pass of the NN depending on architecture."""
         # x = self.relu(self.fc1(x))
         # x = self.fc2(x)
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.conv3(x)
-        x = self.flatten(x)
-        x = self.fc1(x)
+        x = self.relu(self.conv1(x))
+        x = self.relu(self.conv2(x))
+        x = self.relu(self.conv3(x))
+        x = torch.flatten(x, 1)
+        x = self.relu(self.fc1(x))
         x = self.fc2(x)
         return x
 
@@ -79,13 +80,13 @@ class DQN(nn.Module):
         prob = np.random.uniform(0, 1)
         if self.epsilon > self.eps_end:
             self.epsilon = self.epsilon - (self.eps_start - self.eps_end)/self.anneal_length
+
         if prob >= self.epsilon and exploit == True:
             state_action_pair = self.forward(observation.to(device))  # Q(s, left) and Q(s, right) left:0, right:1
             with torch.no_grad():
-                return state_action_pair.max(1)[1].view(1, 1)
+                return state_action_pair.max(1)[1].view(1, 1) + 2
         else:
-
-            return torch.tensor([[random.randrange(self.n_actions)]], device=device, dtype=torch.long)
+            return torch.tensor([[random.randrange(2, 4)]], device=device, dtype=torch.long)
 
         raise NotImplmentedError
 
@@ -103,13 +104,16 @@ def optimize(dqn, target_dqn, memory, optimizer):
     non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
                                             next_obs)), device=device, dtype=torch.bool)
     non_final_next_states = torch.cat([s for s in next_obs if s is not None])
-    state_batch = torch.cat(obs).to(device)
-    action_batch = torch.cat(action).to(device)
-    reward_batch = torch.cat(reward).to(device)
+    state_batch = torch.cat(obs)
+    action_batch = torch.cat(action)
+    reward_batch = torch.cat(reward)
     # TODO: Compute the current estimates of the Q-values for each state-action
     #       pair (s,a). Here, torch.gather() is useful for selecting the Q-values
     #       corresponding to the chosen actions.
-    state_action_pair = dqn(state_batch).gather(1, action_batch.unsqueeze(1))
+    state_action_pair = dqn(state_batch).gather(1, action_batch.unsqueeze(1) - 2)
+    # print(state_batch)
+    # print("______________")
+    # print(action_batch.unsqueeze(1) - 2)
     # TODO: Compute the Q-value targets. Only do this for non-terminal transitions!
     next_state_values = torch.zeros(dqn.batch_size, device=device)
     next_state_values[non_final_mask] = target_dqn(non_final_next_states).max(1)[0].detach()
@@ -117,6 +121,7 @@ def optimize(dqn, target_dqn, memory, optimizer):
     # Compute loss.
     q_values = state_action_pair
     q_value_targets = expected_state_action_values
+    # print(q_values, q_value_targets)
     loss = F.mse_loss(q_values.squeeze(), q_value_targets)
 
     # Perform gradient descent.

@@ -8,8 +8,9 @@ import config
 from utils import preprocess
 from evaluate import evaluate_policy
 from dqn import DQN, ReplayMemory, optimize
+import numpy as np
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--env', choices=['CartPole-v0'], default='Pong-v0')
@@ -44,13 +45,15 @@ if __name__ == '__main__':
     # Keep track of best evaluation mean return achieved so far.
     best_mean_return = -float("Inf")
     obs_stack_size = 4
+    num_step = 0
     for episode in range(env_config['n_episodes']):
         done = False
 
         obs = preprocess(env.reset(), env=args.env).unsqueeze(0)
-        obs_stack = torch.cat(obs_stack_size * [obs]).unsqueeze(0).to(device)
+        obs_stack = torch.cat(obs_stack_size * [obs]).unsqueeze(0)
+        # obs_stack /= 255.0
+        loss_ = []
         while not done:
-            num_step = 0
             # TODO: Get action from DQN.
             action = dqn.act(obs_stack, exploit=True)
 
@@ -59,20 +62,30 @@ if __name__ == '__main__':
             # Preprocess incoming observation.
             if not done:
                 obs_next = preprocess(obs_next, env=args.env).unsqueeze(0)
-                next_obs_stack = torch.cat((obs_stack[:, 1:, ...], obs_next.unsqueeze(1)), dim=1).to(device)
+                next_obs_stack = torch.cat((obs_stack[:, 1:, ...], obs_next.unsqueeze(1)), dim=1)
+                # next_obs_stack /= 255.0
             else:
+                obs_next = None
                 next_obs_stack = None
-            memory.push(obs_stack, torch.asarray([action]), next_obs_stack, torch.asarray([reward]))
+            memory.push(obs_stack, torch.asarray([action], device=device), next_obs_stack, torch.asarray([reward], device=device))
+            obs = obs_next
+            obs_stack = next_obs_stack
+
             # TODO: Add the transition to the replay memory. Remember to convert
             #       everything to PyTorch tensors!
-
+            # if done:
+            num_step += 1
             # TODO: Run DQN.optimize() every env_config["train_frequency"] steps.
             if num_step % env_config["train_frequency"] == 0:
-                optimize(dqn, target_dqn, memory, optimizer)
+                loss = optimize(dqn, target_dqn, memory, optimizer)
+                loss_.append(loss)
             # TODO: Update the target network every env_config["target_update_frequency"] steps.
             if num_step % env_config["target_update_frequency"] == 0:
                 target_dqn.load_state_dict(dqn.state_dict())
-            num_step += 1
+        # print(episode, loss_)
+
+
+
 
         # Evaluate the current agent.
         if episode % args.evaluate_freq == 0:
