@@ -5,10 +5,6 @@ import torch
 import torch.nn as nn
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-<<<<<<< HEAD
-
-=======
->>>>>>> part 1 done
 def preprocess(obs, env):
     """Performs necessary observation preprocessing."""
     if env in ['CartPole-v0']:
